@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ShoppingBag, Search, Menu, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ShoppingBag, Search, Menu, X, User } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
   const { totalItems, setIsCartOpen } = useCart();
+  const { user, profile } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -32,13 +35,20 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-10 font-body text-sm tracking-wide">
           <Link to="/shop?gender=men" className="hover:text-accent transition-colors">MEN</Link>
           <Link to="/shop?gender=women" className="hover:text-accent transition-colors">WOMEN</Link>
-          <Link to="/shop" className="hover:text-accent transition-colors">COLLECTIONS</Link>
+          <Link to="/shop?gender=kids" className="hover:text-accent transition-colors">KIDS</Link>
+          <Link to="/shop" className="hover:text-accent transition-colors">ALL</Link>
         </div>
 
         <div className="flex items-center gap-5">
           <Link to="/shop" className="hover:text-accent transition-colors">
             <Search size={20} />
           </Link>
+          <button
+            onClick={() => user ? navigate("/dashboard") : navigate("/auth")}
+            className="hover:text-accent transition-colors"
+          >
+            <User size={20} />
+          </button>
           <button
             onClick={() => setIsCartOpen(true)}
             className="relative hover:text-accent transition-colors"
@@ -71,7 +81,11 @@ const Navbar = () => {
             <div className="flex flex-col items-center gap-6 py-8 font-body text-sm tracking-wide">
               <Link to="/shop?gender=men" onClick={() => setMobileOpen(false)}>MEN</Link>
               <Link to="/shop?gender=women" onClick={() => setMobileOpen(false)}>WOMEN</Link>
-              <Link to="/shop" onClick={() => setMobileOpen(false)}>COLLECTIONS</Link>
+              <Link to="/shop?gender=kids" onClick={() => setMobileOpen(false)}>KIDS</Link>
+              <Link to="/shop" onClick={() => setMobileOpen(false)}>ALL</Link>
+              <Link to={user ? "/dashboard" : "/auth"} onClick={() => setMobileOpen(false)}>
+                {user ? "MY ACCOUNT" : "SIGN IN"}
+              </Link>
             </div>
           </motion.div>
         )}

@@ -4,10 +4,11 @@ import { Link } from "react-router-dom";
 
 const menCategories = ["Shirts", "T-Shirts", "Blazers", "Jeans", "Footwear"];
 const womenCategories = ["Dresses", "Tops", "Skirts"];
+const kidsCategories = ["T-Shirts", "Shorts", "Dresses"];
 
 const CategorySection = () => {
-  const [gender, setGender] = useState<"men" | "women">("men");
-  const categories = gender === "men" ? menCategories : womenCategories;
+  const [gender, setGender] = useState<"men" | "women" | "kids">("men");
+  const categories = gender === "men" ? menCategories : gender === "women" ? womenCategories : kidsCategories;
 
   return (
     <section className="py-24 px-6">
@@ -32,7 +33,7 @@ const CategorySection = () => {
 
         <div className="flex justify-center mb-14">
           <div className="inline-flex bg-secondary rounded-full p-1">
-            {(["men", "women"] as const).map((g) => (
+            {(["men", "women", "kids"] as const).map((g) => (
               <button
                 key={g}
                 onClick={() => setGender(g)}

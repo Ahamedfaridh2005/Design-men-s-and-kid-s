@@ -1,25 +1,57 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { CreditCard, Smartphone } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
+import { useToast } from "@/hooks/use-toast";
 
 const CheckoutPage = () => {
   const { items, totalPrice, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [processing, setProcessing] = useState(false);
   const [address, setAddress] = useState({ name: "", email: "", street: "", city: "", zip: "", phone: "" });
   const [card, setCard] = useState({ number: "", expiry: "", cvv: "" });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setProcessing(true);
+
+    const orderNumber = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const orderItems = items.map((item) => ({
+      productId: item.product.id,
+      name: item.product.name,
+      price: item.product.price,
+      quantity: item.quantity,
+    }));
+
+    if (user) {
+      const { error } = await supabase.from("orders").insert({
+        user_id: user.id,
+        order_number: orderNumber,
+        items: orderItems,
+        total: totalPrice,
+        status: "Processing",
+        shipping_address: address,
+        payment_method: paymentMethod === "card" ? "Card Payment" : paymentMethod === "gpay" ? "Google Pay" : "PhonePe",
+      });
+
+      if (error) {
+        toast({ title: "Order failed", description: error.message, variant: "destructive" });
+        setProcessing(false);
+        return;
+      }
+    }
+
     setTimeout(() => {
       clearCart();
       navigate("/order-success");
-    }, 2000);
+    }, 1500);
   };
 
   if (items.length === 0) {
@@ -43,7 +75,6 @@ const CheckoutPage = () => {
 
         <form onSubmit={handleSubmit} className="grid lg:grid-cols-2 gap-12">
           <div className="space-y-8">
-            {/* Address */}
             <div>
               <h2 className="font-heading text-sm tracking-widest mb-4">SHIPPING ADDRESS</h2>
               <div className="grid gap-4">
@@ -61,7 +92,6 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* Payment */}
             <div>
               <h2 className="font-heading text-sm tracking-widest mb-4">PAYMENT METHOD</h2>
               <div className="flex gap-3 mb-6">
@@ -88,28 +118,10 @@ const CheckoutPage = () => {
 
               {paymentMethod === "card" && (
                 <div className="grid gap-4">
-                  <input
-                    required
-                    placeholder="Card Number"
-                    value={card.number}
-                    onChange={(e) => setCard({ ...card, number: e.target.value })}
-                    className="w-full px-4 py-3 bg-card border border-border rounded-lg font-body text-sm focus:outline-none focus:border-accent"
-                  />
+                  <input required placeholder="Card Number" value={card.number} onChange={(e) => setCard({ ...card, number: e.target.value })} className="w-full px-4 py-3 bg-card border border-border rounded-lg font-body text-sm focus:outline-none focus:border-accent" />
                   <div className="grid grid-cols-2 gap-4">
-                    <input
-                      required
-                      placeholder="MM/YY"
-                      value={card.expiry}
-                      onChange={(e) => setCard({ ...card, expiry: e.target.value })}
-                      className="w-full px-4 py-3 bg-card border border-border rounded-lg font-body text-sm focus:outline-none focus:border-accent"
-                    />
-                    <input
-                      required
-                      placeholder="CVV"
-                      value={card.cvv}
-                      onChange={(e) => setCard({ ...card, cvv: e.target.value })}
-                      className="w-full px-4 py-3 bg-card border border-border rounded-lg font-body text-sm focus:outline-none focus:border-accent"
-                    />
+                    <input required placeholder="MM/YY" value={card.expiry} onChange={(e) => setCard({ ...card, expiry: e.target.value })} className="w-full px-4 py-3 bg-card border border-border rounded-lg font-body text-sm focus:outline-none focus:border-accent" />
+                    <input required placeholder="CVV" value={card.cvv} onChange={(e) => setCard({ ...card, cvv: e.target.value })} className="w-full px-4 py-3 bg-card border border-border rounded-lg font-body text-sm focus:outline-none focus:border-accent" />
                   </div>
                 </div>
               )}
@@ -124,7 +136,6 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* Order Summary */}
           <div>
             <div className="bg-card border border-border rounded-xl p-6 sticky top-28">
               <h2 className="font-heading text-sm tracking-widest mb-6">ORDER SUMMARY</h2>
@@ -142,16 +153,13 @@ const CheckoutPage = () => {
               </div>
               <div className="border-t border-border pt-4 space-y-2">
                 <div className="flex justify-between text-sm font-body text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span>₹{totalPrice.toLocaleString()}</span>
+                  <span>Subtotal</span><span>₹{totalPrice.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm font-body text-muted-foreground">
-                  <span>Shipping</span>
-                  <span>Free</span>
+                  <span>Shipping</span><span>Free</span>
                 </div>
                 <div className="flex justify-between font-heading text-lg font-bold pt-2 border-t border-border">
-                  <span>Total</span>
-                  <span>₹{totalPrice.toLocaleString()}</span>
+                  <span>Total</span><span>₹{totalPrice.toLocaleString()}</span>
                 </div>
               </div>
               <button
