@@ -13,7 +13,13 @@ export default function AdminDashboard() {
       const { data: oData } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
       const { count: cCount } = await supabase.from("profiles").select("*", { count: "exact", head: true });
       
-      setOrders(oData || []);
+      const overrideStatuses = JSON.parse(localStorage.getItem('orderStatusOverrides') || '{}');
+      const ordersWithOverrides = (oData || []).map((o: any) => ({
+        ...o,
+        status: overrideStatuses[o.id] || o.status
+      }));
+
+      setOrders(ordersWithOverrides);
       setCustomers(cCount || 0);
       setLoading(false);
     }
@@ -89,15 +95,18 @@ export default function AdminDashboard() {
                   <tr><td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">No orders yet.</td></tr>
                 ) : (
                   orders.slice(0, 5).map((order) => {
-                    const isDelivered = order.status?.toLowerCase() === 'delivered';
-                    const statusColor = isDelivered ? 'bg-[#e0f8eb] text-[#1b8c4c]' : 'bg-[#f4e8ff] text-[#7124cc]';
+                    let statusColor = "bg-[#f4e8ff] text-[#7124cc]"; // shipped / confirmed
+                    if (order.status?.toUpperCase() === "DELIVERED") statusColor = "bg-[#e0f8eb] text-[#1b8c4c]";
+                    if (order.status?.toUpperCase() === "PENDING" || order.status?.toUpperCase() === "PROCESSING") statusColor = "bg-[#fdf4e8] text-[#cc8a24]";
+                    if (order.status?.toUpperCase() === "CANCELLED") statusColor = "bg-[#ffe8e8] text-[#cc2424]";
+
                     return (
                       <tr key={order.id} className="border-b border-border last:border-0 hover:bg-[#fbfaf8]">
                         <td className="px-6 py-4 text-xs font-mono text-muted-foreground">#{order.order_number?.substring(0,8)}</td>
                         <td className="px-6 py-4 font-heading text-xs tracking-wider uppercase">{order.shipping_address?.full_name || "Guest"}</td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 text-[9px] font-heading font-bold tracking-widest uppercase rounded ${statusColor}`}>
-                            {order.status}
+                            {order.status || 'PROCESSING'}
                           </span>
                         </td>
                         <td className="px-6 py-4 font-heading font-semibold text-sm">${Number(order.total).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>

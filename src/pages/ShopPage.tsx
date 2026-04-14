@@ -55,7 +55,7 @@ const ShopPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="font-heading text-4xl md:text-5xl font-bold mb-2"
         >
-          {gender ? `${gender === "men" ? "Men's" : "Women's"} Collection` : "All Collections"}
+          {gender ? `${gender.charAt(0).toUpperCase() + gender.slice(1)}'s Collection` : "All Collections"}
         </motion.h1>
         <p className="text-muted-foreground font-body mb-10">{filtered.length} pieces</p>
 
@@ -159,8 +159,8 @@ const ShopPage = () => {
 
         {/* Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-16">
-          {filtered.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {filtered.map((product, index) => (
+            <ProductCard key={product.id} product={product} priority={index < 4} />
           ))}
         </div>
 

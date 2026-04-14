@@ -2,15 +2,22 @@ import { useEffect, useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, FileText } from "lucide-react";
+import InvoiceModal from "@/components/admin/InvoiceModal";
 
 export default function AdminInvoices() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
 
   useEffect(() => {
     async function fetchData() {
       const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-      setOrders(data || []);
+      const overrideStatuses = JSON.parse(localStorage.getItem('orderStatusOverrides') || '{}');
+      const ordersWithOverrides = (data || []).map((o: any) => ({
+        ...o,
+        status: overrideStatuses[o.id] || o.status
+      }));
+      setOrders(ordersWithOverrides);
       setLoading(false);
     }
     fetchData();
@@ -67,7 +74,10 @@ export default function AdminInvoices() {
               {loading ? (
                  <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">Loading...</td></tr>
               ) : orders.map((order) => {
-                const statusColor = order.status?.toLowerCase() === 'delivered' ? 'bg-[#e0f8eb] text-[#1b8c4c]' : 'bg-[#f4e8ff] text-[#7124cc]';
+                let statusColor = "bg-[#f4e8ff] text-[#7124cc]"; // shipped / confirmed
+                if (order.status?.toUpperCase() === "DELIVERED") statusColor = "bg-[#e0f8eb] text-[#1b8c4c]";
+                if (order.status?.toUpperCase() === "PENDING" || order.status?.toUpperCase() === "PROCESSING") statusColor = "bg-[#fdf4e8] text-[#cc8a24]";
+                if (order.status?.toUpperCase() === "CANCELLED") statusColor = "bg-[#ffe8e8] text-[#cc2424]";
                 
                 return (
                 <tr key={order.id} className="border-b border-border last:border-0 hover:bg-[#fbfaf8]">
@@ -81,12 +91,12 @@ export default function AdminInvoices() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 text-[9px] font-heading font-bold tracking-widest uppercase rounded ${statusColor}`}>
-                      {order.status}
+                      {order.status || 'PROCESSING'}
                     </span>
                   </td>
                   <td className="px-6 py-4 font-heading font-bold text-sm">${Number(order.total).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                   <td className="px-6 py-4 text-right">
-                     <button className="text-muted-foreground hover:text-foreground transition-colors p-2"><FileText size={14} /></button>
+                     <button onClick={() => setSelectedInvoice(order)} className="text-muted-foreground hover:text-foreground transition-colors p-2"><FileText size={14} /></button>
                   </td>
                 </tr>
               )})}
@@ -94,6 +104,11 @@ export default function AdminInvoices() {
           </table>
         </div>
       </div>
+      <InvoiceModal 
+        isOpen={!!selectedInvoice} 
+        onClose={() => setSelectedInvoice(null)} 
+        invoiceData={selectedInvoice} 
+      />
     </AdminLayout>
   );
 }

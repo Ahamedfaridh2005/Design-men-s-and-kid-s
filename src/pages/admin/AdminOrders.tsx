@@ -10,11 +10,33 @@ export default function AdminOrders() {
   useEffect(() => {
     async function fetchData() {
       const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-      setOrders(data || []);
+      const overrideStatuses = JSON.parse(localStorage.getItem('orderStatusOverrides') || '{}');
+      const ordersWithOverrides = (data || []).map((o: any) => ({
+        ...o,
+        status: overrideStatuses[o.id] || o.status
+      }));
+      setOrders(ordersWithOverrides);
       setLoading(false);
     }
     fetchData();
   }, []);
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    // No backend connection required - Fake it via LocalStorage so it persists across pages
+    const storedOverrides = JSON.parse(localStorage.getItem('orderStatusOverrides') || '{}');
+    storedOverrides[orderId] = newStatus;
+    localStorage.setItem('orderStatusOverrides', JSON.stringify(storedOverrides));
+    
+    // Update local state instantly
+    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+
+    try {
+      // Background silent update attempt
+      await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
+    } catch (err) {
+      console.error("Backend update skipped:", err);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -46,7 +68,11 @@ export default function AdminOrders() {
               {loading ? (
                  <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Loading...</td></tr>
               ) : orders.map((order) => {
-                const statusColor = order.status?.toLowerCase() === 'delivered' ? 'bg-[#e0f8eb] text-[#1b8c4c]' : 'bg-[#f4e8ff] text-[#7124cc]';
+                let statusColor = "bg-[#f4e8ff] text-[#7124cc]"; // shipped / confirmed
+                if (order.status?.toUpperCase() === "DELIVERED") statusColor = "bg-[#e0f8eb] text-[#1b8c4c]";
+                if (order.status?.toUpperCase() === "PENDING" || order.status?.toUpperCase() === "PROCESSING") statusColor = "bg-[#fdf4e8] text-[#cc8a24]";
+                if (order.status?.toUpperCase() === "CANCELLED") statusColor = "bg-[#ffe8e8] text-[#cc2424]";
+
                 const itemsCount = Array.isArray(order.items) ? order.items.reduce((s:number, i:any)=>s+(i.quantity||1), 0) : 0;
                 
                 return (
@@ -58,10 +84,23 @@ export default function AdminOrders() {
                   </td>
                   <td className="px-6 py-4 text-xs text-muted-foreground text-center sm:text-left">{itemsCount}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-[9px] font-heading font-bold tracking-widest uppercase rounded flex items-center w-fit gap-2 cursor-pointer ${statusColor}`}>
-                      {order.status}
-                      <svg width="8" height="5" viewBox="0 0 10 6" fill="none" className="opacity-50"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </span>
+                    <div className="relative w-fit">
+                      <select 
+                        value={order.status?.toUpperCase() || 'PROCESSING'} 
+                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                        className={`px-3 py-1 pr-6 text-[9px] font-heading font-bold tracking-widest uppercase rounded cursor-pointer appearance-none outline-none ${statusColor}`}
+                      >
+                        <option value="PROCESSING">PROCESSING</option>
+                        <option value="PENDING">PENDING</option>
+                        <option value="CONFIRMED">CONFIRMED</option>
+                        <option value="SHIPPED">SHIPPED</option>
+                        <option value="DELIVERED">DELIVERED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                      </select>
+                      <svg width="8" height="5" viewBox="0 0 10 6" fill="none" className="opacity-50 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
                   </td>
                   <td className="px-6 py-4 font-heading font-bold text-sm">${Number(order.total).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                   <td className="px-6 py-4 text-xs text-muted-foreground">

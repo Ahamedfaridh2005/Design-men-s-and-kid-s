@@ -7,9 +7,10 @@ import QuickViewModal from "./QuickViewModal";
 
 interface Props {
   product: Product;
+  priority?: boolean;
 }
 
-const ProductCard = ({ product }: Props) => {
+const ProductCard = ({ product, priority = false }: Props) => {
   const { addToCart } = useCart();
   const [showQuickView, setShowQuickView] = useState(false);
 
@@ -25,7 +26,9 @@ const ProductCard = ({ product }: Props) => {
           <img
             src={product.image}
             alt={product.name}
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            fetchpriority={priority ? "high" : "auto"}
+            decoding="async"
             width={400}
             height={533}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"

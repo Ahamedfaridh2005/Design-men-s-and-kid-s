@@ -9,6 +9,7 @@ import {
 import Footer from "@/components/Footer";
 import { products } from "@/data/products";
 import { useToast } from "@/hooks/use-toast";
+import OrderTrackingModal from "@/components/OrderTrackingModal";
 
 type Tab = "orders" | "account" | "addresses" | "wishlist" | "returns" | "payment" | "issues";
 
@@ -23,10 +24,12 @@ const tabs: { id: Tab; label: string; icon: any }[] = [
 ];
 
 const statusColors: Record<string, string> = {
-  Processing: "bg-yellow-100 text-yellow-700",
-  Shipped: "bg-blue-100 text-blue-700",
-  "Out for Delivery": "bg-purple-100 text-purple-700",
-  Delivered: "bg-green-100 text-green-700",
+  PROCESSING: "bg-yellow-100 text-yellow-700",
+  PENDING: "bg-yellow-100 text-yellow-700",
+  CONFIRMED: "bg-blue-100 text-blue-700",
+  SHIPPED: "bg-purple-100 text-purple-700",
+  DELIVERED: "bg-green-100 text-green-700",
+  CANCELLED: "bg-red-100 text-red-700",
 };
 
 const DashboardPage = () => {
@@ -36,6 +39,7 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [trackingOrder, setTrackingOrder] = useState<any>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -45,7 +49,14 @@ const DashboardPage = () => {
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      setOrders(data || []);
+        
+      const overrideStatuses = JSON.parse(localStorage.getItem('orderStatusOverrides') || '{}');
+      const ordersWithOverrides = (data || []).map((o: any) => ({
+        ...o,
+        status: overrideStatuses[o.id] || o.status
+      }));
+      
+      setOrders(ordersWithOverrides);
       setLoadingOrders(false);
     };
     fetchOrders();
@@ -98,10 +109,13 @@ const DashboardPage = () => {
                           {new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-heading font-semibold ${statusColors[order.status] || "bg-secondary text-foreground"}`}>
-                          {order.status?.toUpperCase()}
-                        </span>
+                      <div className="flex items-center gap-4">
+                        <button 
+                          onClick={() => setTrackingOrder(order)}
+                          className="px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-heading font-bold tracking-widest uppercase bg-[#f5f4ef] text-[#2c2c2c] hover:bg-black hover:text-white transition-colors border border-border/50"
+                        >
+                          Track Order
+                        </button>
                         <span className="font-heading font-bold">₹{Number(order.total).toLocaleString()}</span>
                       </div>
                     </div>
@@ -324,6 +338,12 @@ const DashboardPage = () => {
         </div>
       </div>
       <Footer />
+      
+      <OrderTrackingModal 
+        isOpen={!!trackingOrder} 
+        onClose={() => setTrackingOrder(null)} 
+        order={trackingOrder} 
+      />
     </div>
   );
 };

@@ -20,10 +20,10 @@ const HeroSection = () => {
       <motion.div style={{ scale }} className="absolute inset-0">
         <div className="absolute inset-0 grid grid-cols-2">
           <div className="relative overflow-hidden">
-            <img src={heroMale} alt="Men's Collection" className="w-full h-full object-cover" width={960} height={1080} />
+            <img src={heroMale} alt="Men's Collection" loading="eager" fetchpriority="high" decoding="async" className="w-full h-full object-cover" width={960} height={1080} />
           </div>
           <div className="relative overflow-hidden">
-            <img src={heroFemale} alt="Women's Collection" className="w-full h-full object-cover" width={960} height={1080} />
+            <img src={heroFemale} alt="Women's Collection" loading="eager" fetchpriority="high" decoding="async" className="w-full h-full object-cover" width={960} height={1080} />
           </div>
         </div>
         <div className="hero-overlay absolute inset-0" />

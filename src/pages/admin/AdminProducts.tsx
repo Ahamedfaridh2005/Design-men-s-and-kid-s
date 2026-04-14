@@ -2,11 +2,47 @@ import { useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { products } from "@/data/products";
 import { Search, Edit2, Trash2, Save, X } from "lucide-react";
+import AddProductModal from "@/components/admin/AddProductModal";
 
 export default function AdminProducts() {
   const [prodList, setProdList] = useState([...products]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", price: 0 });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+
+  const handleSaveProduct = (productData: any) => {
+    if (productData.id) {
+      // Update existing
+      const index = products.findIndex(p => p.id === productData.id);
+      if (index > -1) {
+        products[index] = {
+          ...products[index],
+          name: productData.name,
+          price: productData.price,
+          category: productData.category,
+          gender: productData.category.toLowerCase() as "men" | "women" | "kids",
+          description: productData.description || products[index].description,
+          ...(productData.image ? { image: URL.createObjectURL(productData.image) } : {})
+        };
+      }
+    } else {
+      // Add new
+      const newId = (productData.category.charAt(0).toLowerCase()) + (products.length + 1);
+      const newProduct = {
+        id: newId,
+        name: productData.name,
+        price: productData.price,
+        category: productData.category,
+        gender: productData.category.toLowerCase() as "men" | "women" | "kids",
+        image: productData.image ? URL.createObjectURL(productData.image) : "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&q=80",
+        description: productData.description || "Premium product.",
+      };
+      products.push(newProduct);
+    }
+    
+    setProdList([...products]);
+    setIsModalOpen(false);
+    setEditingProduct(null);
+  };
 
   const handleDelete = (id: string) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this product?");
@@ -20,20 +56,9 @@ export default function AdminProducts() {
     setProdList([...products]);
   };
 
-  const startEdit = (product: any) => {
-    setEditingId(product.id);
-    setEditForm({ name: product.name, price: product.price });
-  };
-
-  const saveEdit = (id: string) => {
-    // Mutate the original global array
-    const index = products.findIndex(p => p.id === id);
-    if (index > -1) {
-      products[index].name = editForm.name;
-      products[index].price = editForm.price;
-    }
-    setProdList([...products]);
-    setEditingId(null);
+  const handleEditClick = (product: any, stockLevel: number) => {
+    setEditingProduct({ ...product, stock: stockLevel });
+    setIsModalOpen(true);
   };
 
   return (
@@ -48,7 +73,7 @@ export default function AdminProducts() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input type="text" placeholder="Search..." className="border border-border pl-10 pr-4 py-2 font-body text-sm bg-transparent focus:outline-none w-[250px]" />
             </div>
-            <button className="bg-[#1a1a1a] text-white px-6 py-2.5 text-[10px] font-heading font-bold tracking-widest uppercase hover:bg-black transition-colors shrink-0">
+            <button onClick={() => { setEditingProduct(null); setIsModalOpen(true); }} className="bg-[#1a1a1a] text-white px-6 py-2.5 text-[10px] font-heading font-bold tracking-widest uppercase hover:bg-black transition-colors shrink-0">
               + Add Product
             </button>
           </div>
@@ -69,55 +94,24 @@ export default function AdminProducts() {
             <tbody>
               {prodList.map((product) => {
                  const stockLevel = (product.id.charCodeAt(0) + product.id.charCodeAt(1)) * 3 % 45 + 5;
-                 const isEditing = editingId === product.id;
                  
                  return (
                 <tr key={product.id} className="border-b border-border last:border-0 hover:bg-[#fbfaf8]">
                   <td className="px-6 py-4 flex items-center gap-4 min-w-[250px]">
                     <img src={product.image} alt={product.name} className="w-10 h-12 object-cover bg-secondary overflow-hidden shrink-0" />
-                    {isEditing ? (
-                       <input 
-                         type="text" 
-                         value={editForm.name} 
-                         onChange={e => setEditForm({...editForm, name: e.target.value})} 
-                         className="font-heading text-sm border-b border-black focus:outline-none bg-transparent w-full" 
-                         autoFocus
-                       />
-                    ) : (
-                       <span className="font-heading text-sm min-w-0 truncate">{product.name}</span>
-                    )}
+                    <span className="font-heading text-sm min-w-0 truncate">{product.name}</span>
                   </td>
                   <td className="px-6 py-4 text-xs text-muted-foreground capitalize">{product.gender}</td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-0.5 text-[9px] font-heading font-bold tracking-widest uppercase rounded bg-[#e0f8eb] text-[#1b8c4c]">Active</span>
                   </td>
                   <td className="px-6 py-4 font-heading font-bold text-sm text-[#2c2c2c] min-w-[120px]">
-                    {isEditing ? (
-                      <div className="flex items-center">
-                        $<input 
-                           type="number" 
-                           value={editForm.price} 
-                           onChange={e => setEditForm({...editForm, price: Number(e.target.value)})} 
-                           className="w-20 ml-1 border-b border-black focus:outline-none bg-transparent font-heading" 
-                        />
-                      </div>
-                    ) : (
-                      `$${(product.price).toLocaleString(undefined, {minimumFractionDigits: 2})}`
-                    )}
+                    ${(product.price).toLocaleString(undefined, {minimumFractionDigits: 2})}
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">{stockLevel}</td>
                   <td className="px-6 py-4 text-right">
-                    {isEditing ? (
-                      <>
-                        <button onClick={() => saveEdit(product.id)} className="text-[#1b8c4c] hover:text-green-700 transition-colors p-1"><Save size={14} /></button>
-                        <button onClick={() => setEditingId(null)} className="text-muted-foreground hover:text-black transition-colors p-1 ml-2"><X size={14} /></button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={() => startEdit(product)} className="text-muted-foreground hover:text-primary transition-colors p-1 inline-block"><Edit2 size={13} /></button>
-                        <button onClick={() => handleDelete(product.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1 ml-2 inline-block"><Trash2 size={13} /></button>
-                      </>
-                    )}
+                    <button onClick={() => handleEditClick(product, stockLevel)} className="text-muted-foreground hover:text-primary transition-colors p-1 inline-block"><Edit2 size={13} /></button>
+                    <button onClick={() => handleDelete(product.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1 ml-2 inline-block"><Trash2 size={13} /></button>
                   </td>
                 </tr>
               )})}
@@ -130,6 +124,12 @@ export default function AdminProducts() {
           </table>
         </div>
       </div>
+      <AddProductModal 
+        isOpen={isModalOpen} 
+        onClose={() => { setIsModalOpen(false); setEditingProduct(null); }} 
+        onSave={handleSaveProduct}
+        initialData={editingProduct}
+      />
     </AdminLayout>
   );
 }

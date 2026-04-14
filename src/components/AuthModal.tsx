@@ -49,11 +49,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         resetForm();
       }
     } else {
-      const { error } = await signUp(email, password, displayName);
+      const { data, error } = await signUp(email, password, displayName);
       if (error) {
         toast({ title: "Signup failed", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Check your email", description: "We've sent you a verification link to confirm your account." });
+        if (data?.session) {
+          toast({ title: "Welcome!", description: "Your account has been created and you are now signed in." });
+        } else {
+          toast({ title: "Check your email", description: "We've sent you a verification link to confirm your account." });
+        }
         onClose();
         resetForm();
       }
