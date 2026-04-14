@@ -3,7 +3,7 @@ const Footer = () => (
     <div className="container mx-auto">
       <div className="grid md:grid-cols-4 gap-10 mb-12">
         <div>
-          <h3 className="font-heading text-xl font-bold tracking-wider mb-4">ÉLEVE</h3>
+          <h3 className="font-heading text-lg font-bold tracking-wider mb-4">Design mens and kids</h3>
           <p className="text-muted-foreground font-body text-sm leading-relaxed">
             Where timeless craftsmanship meets contemporary elegance.
           </p>
@@ -24,11 +24,12 @@ const Footer = () => (
           <h4 className="font-heading text-sm tracking-widest mb-4">CONNECT</h4>
           <div className="space-y-2 text-sm text-muted-foreground font-body">
             <p>Instagram</p><p>Twitter</p><p>Pinterest</p>
+            <p className="pt-4 text-foreground mt-4 border-t border-border/50">Location: Moolakadai, Madhavaram</p>
           </div>
         </div>
       </div>
       <div className="border-t border-border pt-8 text-center text-xs text-muted-foreground font-body">
-        © 2026 ÉLEVE. All rights reserved.
+        © 2026 Design mens and kids. All rights reserved.
       </div>
     </div>
   </footer>

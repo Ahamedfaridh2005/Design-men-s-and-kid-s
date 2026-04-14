@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, SlidersHorizontal } from "lucide-react";
@@ -8,12 +8,20 @@ import Footer from "@/components/Footer";
 
 const ShopPage = () => {
   const [searchParams] = useSearchParams();
-  const initialGender = (searchParams.get("gender") as "men" | "women") || undefined;
+  const initialGender = (searchParams.get("gender") as "men" | "women" | "kids") || undefined;
   const initialCategory = searchParams.get("category") || undefined;
 
-  const [gender, setGender] = useState<"men" | "women" | undefined>(initialGender);
+  const [gender, setGender] = useState<"men" | "women" | "kids" | undefined>(initialGender);
   const [category, setCategory] = useState<string | undefined>(initialCategory);
   const [search, setSearch] = useState("");
+
+  // Sync state when URL search parameters change
+  useEffect(() => {
+    const urlGender = searchParams.get("gender") as "men" | "women" | "kids" | null;
+    if (urlGender !== gender) {
+      setGender(urlGender || undefined);
+    }
+  }, [searchParams, gender]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 20000]);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -94,7 +102,7 @@ const ShopPage = () => {
               <div>
                 <label className="font-heading text-xs tracking-widest text-muted-foreground mb-3 block">GENDER</label>
                 <div className="flex gap-2">
-                  {[undefined, "men", "women"].map((g) => (
+                  {[undefined, "men", "women", "kids"].map((g) => (
                     <button
                       key={g || "all"}
                       onClick={() => { setGender(g as any); setCategory(undefined); }}

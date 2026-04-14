@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import {
-  Package, User, MapPin, Heart, RotateCcw, CreditCard, MessageSquare, LogOut,
+  Package, User, MapPin, Heart, RotateCcw, CreditCard, MessageSquare, LogOut, AlertCircle
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { products } from "@/data/products";
@@ -132,28 +132,43 @@ const DashboardPage = () => {
       case "account":
         return (
           <div>
-            <h2 className="font-heading text-2xl font-bold mb-6">Account Details</h2>
-            <div className="space-y-4 max-w-md">
+            <h2 className="font-heading text-2xl mb-8">Account Details</h2>
+            <div className="space-y-6 max-w-2xl">
               <div>
-                <label className="text-xs font-heading tracking-widest text-muted-foreground">NAME</label>
-                <p className="font-body mt-1">{profile?.display_name || "—"}</p>
+                <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Full Name</label>
+                <input type="text" defaultValue={profile?.display_name || ""} className="w-full border border-border p-3 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent" />
               </div>
               <div>
-                <label className="text-xs font-heading tracking-widest text-muted-foreground">EMAIL</label>
-                <p className="font-body mt-1">{user?.email}</p>
+                <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Email Address</label>
+                <input type="email" defaultValue={user?.email || ""} className="w-full border border-border p-3 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent" />
               </div>
               <div>
-                <label className="text-xs font-heading tracking-widest text-muted-foreground">PHONE</label>
-                <p className="font-body mt-1">{profile?.phone || "—"}</p>
+                <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Phone Number</label>
+                <input type="tel" defaultValue={profile?.phone || ""} className="w-full border border-border p-3 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent" />
               </div>
+              <button className="bg-[#1a1a1a] text-white px-8 py-3.5 text-xs font-heading font-bold tracking-widest hover:bg-black transition-colors mt-6 uppercase">
+                Save Changes
+              </button>
             </div>
           </div>
         );
       case "addresses":
         return (
           <div>
-            <h2 className="font-heading text-2xl font-bold mb-6">Saved Addresses</h2>
-            <p className="text-muted-foreground font-body">No saved addresses yet. Add one during checkout.</p>
+            <h2 className="font-heading text-2xl mb-8">Saved Addresses</h2>
+            <div className="border border-border p-6 mb-6 bg-card/30 max-w-3xl">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="bg-[#1a1a1a] text-white text-[10px] font-heading font-bold px-2 py-0.5 tracking-wider uppercase">Default</span>
+                  <span className="font-heading font-semibold text-[15px] uppercase">{profile?.display_name?.toUpperCase() || "USER"}</span>
+                </div>
+                <button className="text-xs text-muted-foreground hover:text-foreground underline decoration-muted-foreground underline-offset-4">Edit</button>
+              </div>
+              <p className="text-muted-foreground font-body text-sm">No address saved yet.</p>
+            </div>
+            <button className="border border-border px-6 py-3.5 text-[11px] font-heading font-bold tracking-widest hover:bg-secondary transition-colors uppercase flex items-center gap-2">
+              <span className="text-lg leading-none mt-[-2px]">+</span> ADD NEW ADDRESS
+            </button>
           </div>
         );
       case "wishlist":
@@ -173,15 +188,81 @@ const DashboardPage = () => {
       case "payment":
         return (
           <div>
-            <h2 className="font-heading text-2xl font-bold mb-6">Payment Methods</h2>
-            <p className="text-muted-foreground font-body">No saved payment methods.</p>
+            <h2 className="font-heading text-2xl mb-8">Payment Methods</h2>
+            <div className="border border-border p-16 mb-6 flex flex-col items-center justify-center text-center bg-card/30 min-h-[300px] max-w-3xl">
+              <CreditCard className="w-10 h-10 text-muted-foreground/30 mb-6 stroke-[1.5]" />
+              <h3 className="font-heading text-xl mb-2 text-muted-foreground/80">No saved payment methods</h3>
+              <p className="font-body text-sm text-muted-foreground">Add a card for faster checkout</p>
+            </div>
+            <button className="border border-border px-6 py-3.5 text-[11px] font-heading font-bold tracking-widest hover:bg-secondary transition-colors uppercase flex items-center gap-2">
+              <span className="text-lg leading-none mt-[-2px]">+</span> ADD PAYMENT METHOD
+            </button>
           </div>
         );
       case "issues":
         return (
           <div>
-            <h2 className="font-heading text-2xl font-bold mb-6">Issue Reports</h2>
-            <p className="text-muted-foreground font-body">No issues reported.</p>
+            <h2 className="font-heading text-2xl mb-8">Report an Issue</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+              {["Wrong Item Received", "Damaged Product", "Missing Item", "Size / Fit Issue", "Quality Concern", "Delivery Problem"].map((category) => (
+                <button key={category} className="border border-border p-5 text-left hover:border-primary transition-colors flex items-start gap-4 bg-card group min-h-[80px]">
+                  <AlertCircle className="w-5 h-5 text-muted-foreground group-hover:text-foreground shrink-0 mt-0.5 stroke-[1.5]" />
+                  <span className="font-body text-sm text-muted-foreground group-hover:text-foreground">{category}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="bg-[#fcfbf9]/50 border border-border p-8 max-w-3xl">
+              <h3 className="font-heading text-xl mb-8">Submit a Ticket</h3>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Order</label>
+                  <div className="relative">
+                    <select className="w-full border border-border p-3.5 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent appearance-none cursor-pointer">
+                      <option value="">Select an order...</option>
+                      {orders.map((order) => (
+                        <option key={order.id} value={order.id}>
+                          Order #{order.order_number} - {new Date(order.created_at).toLocaleDateString()}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Issue Category</label>
+                  <div className="relative">
+                    <select className="w-full border border-border p-3.5 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent appearance-none cursor-pointer">
+                      <option value="">Select category...</option>
+                      {["Wrong Item Received", "Damaged Product", "Missing Item", "Size / Fit Issue", "Quality Concern", "Delivery Problem"].map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Description</label>
+                  <textarea 
+                    rows={5} 
+                    className="w-full border border-border p-3.5 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent resize-none"
+                    placeholder="Describe your issue in detail..."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
           </div>
         );
     }

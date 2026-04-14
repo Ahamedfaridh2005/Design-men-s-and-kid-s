@@ -1,4 +1,6 @@
 import HeroSection from "@/components/HeroSection";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
+import { FlashSale } from "@/components/FlashSale";
 import CategorySection from "@/components/CategorySection";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import Footer from "@/components/Footer";
@@ -9,6 +11,8 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <HeroSection />
+      <AnnouncementBar />
+      <FlashSale />
       <CategorySection />
       <FeaturedProducts />
 
@@ -22,7 +26,7 @@ const Index = () => {
             transition={{ duration: 0.8 }}
             className="text-center max-w-2xl mx-auto"
           >
-            <p className="text-xs tracking-[0.3em] text-accent font-heading mb-4">THE ÉLEVE DIFFERENCE</p>
+            <p className="text-xs tracking-[0.3em] text-accent font-heading mb-4">THE DESIGN MENS AND KIDS DIFFERENCE</p>
             <h2 className="font-heading text-3xl md:text-5xl font-bold mb-6 leading-tight">
               Crafted with intention.
               <br />

@@ -1,22 +1,38 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ShoppingBag, Search, Menu, X, User } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
+import { AuthModal } from "@/components/AuthModal";
 
 const Navbar = () => {
   const { totalItems, setIsCartOpen } = useCart();
   const { user, profile } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isShop = location.pathname === "/shop";
+  const searchParams = new URLSearchParams(location.search);
+  const genderQuery = searchParams.get("gender");
+
+  const isMenActive = isShop && genderQuery === "men";
+  const isWomenActive = isShop && genderQuery === "women";
+  const isKidsActive = isShop && genderQuery === "kids";
+  const isAllActive = isShop && !genderQuery;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  if (location.pathname.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <motion.nav
@@ -27,24 +43,27 @@ const Navbar = () => {
         scrolled ? "glass-card py-3" : "bg-transparent py-6"
       }`}
     >
-      <div className="container mx-auto px-6 flex items-center justify-between">
-        <Link to="/" className="font-heading text-2xl font-bold tracking-wider">
-          ÉLEVE
+      <div className="w-full px-6 lg:px-12 flex items-center justify-between max-w-[2000px] mx-auto">
+        <Link to="/" className="font-heading text-lg lg:text-xl font-bold tracking-wider shrink-0 whitespace-nowrap mr-6">
+          Design Men's & Kid's
         </Link>
 
-        <div className="hidden md:flex items-center gap-10 font-body text-sm tracking-wide">
-          <Link to="/shop?gender=men" className="hover:text-accent transition-colors">MEN</Link>
-          <Link to="/shop?gender=women" className="hover:text-accent transition-colors">WOMEN</Link>
-          <Link to="/shop?gender=kids" className="hover:text-accent transition-colors">KIDS</Link>
-          <Link to="/shop" className="hover:text-accent transition-colors">ALL</Link>
+        <div className="hidden md:flex items-center gap-6 lg:gap-10 font-body text-sm tracking-wide">
+          <Link to="/shop?gender=men" className={`transition-colors ${isMenActive ? 'text-accent font-bold' : 'hover:text-accent'}`}>MEN</Link>
+          <Link to="/shop?gender=women" className={`transition-colors ${isWomenActive ? 'text-accent font-bold' : 'hover:text-accent'}`}>WOMEN</Link>
+          <Link to="/shop?gender=kids" className={`transition-colors ${isKidsActive ? 'text-accent font-bold' : 'hover:text-accent'}`}>KIDS</Link>
+          <Link to="/shop" className={`transition-colors ${isAllActive ? 'text-accent font-bold' : 'hover:text-accent'}`}>ALL</Link>
         </div>
 
         <div className="flex items-center gap-5">
+          <Link to="/admin" className="hidden sm:flex border border-border/80 px-3 py-1.5 text-[11px] font-heading font-bold tracking-widest uppercase text-muted-foreground hover:bg-secondary/50 transition-colors mr-1">
+            ADMIN
+          </Link>
           <Link to="/shop" className="hover:text-accent transition-colors">
             <Search size={20} />
           </Link>
           <button
-            onClick={() => user ? navigate("/dashboard") : navigate("/auth")}
+            onClick={() => user ? navigate("/dashboard") : setAuthModalOpen(true)}
             className="hover:text-accent transition-colors"
           >
             <User size={20} />
@@ -79,17 +98,23 @@ const Navbar = () => {
             className="md:hidden glass-card border-t border-border/30 mt-2"
           >
             <div className="flex flex-col items-center gap-6 py-8 font-body text-sm tracking-wide">
-              <Link to="/shop?gender=men" onClick={() => setMobileOpen(false)}>MEN</Link>
-              <Link to="/shop?gender=women" onClick={() => setMobileOpen(false)}>WOMEN</Link>
-              <Link to="/shop?gender=kids" onClick={() => setMobileOpen(false)}>KIDS</Link>
-              <Link to="/shop" onClick={() => setMobileOpen(false)}>ALL</Link>
-              <Link to={user ? "/dashboard" : "/auth"} onClick={() => setMobileOpen(false)}>
-                {user ? "MY ACCOUNT" : "SIGN IN"}
-              </Link>
+              <Link to="/shop?gender=men" onClick={() => setMobileOpen(false)} className={`${isMenActive ? 'text-accent font-bold' : ''}`}>MEN</Link>
+              <Link to="/shop?gender=women" onClick={() => setMobileOpen(false)} className={`${isWomenActive ? 'text-accent font-bold' : ''}`}>WOMEN</Link>
+              <Link to="/shop?gender=kids" onClick={() => setMobileOpen(false)} className={`${isKidsActive ? 'text-accent font-bold' : ''}`}>KIDS</Link>
+              <Link to="/shop" onClick={() => setMobileOpen(false)} className={`${isAllActive ? 'text-accent font-bold' : ''}`}>ALL</Link>
+              {user ? (
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)}>MY ACCOUNT</Link>
+              ) : (
+                <button onClick={() => { setAuthModalOpen(true); setMobileOpen(false); }} className="uppercase">
+                  SIGN IN
+                </button>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </motion.nav>
   );
 };
