@@ -3,23 +3,51 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, FileText } from "lucide-react";
 import InvoiceModal from "@/components/admin/InvoiceModal";
+import NewInvoiceModal from "@/components/admin/NewInvoiceModal";
 
 export default function AdminInvoices() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false);
+  const [autoAction, setAutoAction] = useState<'print' | 'pdf' | null>(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    let dbOrders = [];
+    try {
+      const { data } = await supabase.from("orders").select("*");
+      dbOrders = data || [];
+    } catch (e) {
+      console.warn("Could not fetch db orders", e);
+    }
+    
+    const localInvoices = JSON.parse(localStorage.getItem('adminInvoices') || '[]');
+    const allOrders = [...localInvoices, ...dbOrders].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    const overrideStatuses = JSON.parse(localStorage.getItem('orderStatusOverrides') || '{}');
+    const ordersWithOverrides = allOrders.map((o: any) => ({
+      ...o,
+      status: overrideStatuses[o.id] || o.status
+    }));
+    setOrders(ordersWithOverrides);
+    setLoading(false);
+  };
+
+  const handleNewInvoiceSuccess = (action: 'save' | 'print' | 'pdf', newOrder?: any) => {
+    if (newOrder) {
+      const localInvoices = JSON.parse(localStorage.getItem('adminInvoices') || '[]');
+      localInvoices.unshift(newOrder);
+      localStorage.setItem('adminInvoices', JSON.stringify(localInvoices));
+    }
+    fetchData();
+    if ((action === 'print' || action === 'pdf') && newOrder) {
+      setAutoAction(action);
+      setSelectedInvoice(newOrder);
+    }
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-      const overrideStatuses = JSON.parse(localStorage.getItem('orderStatusOverrides') || '{}');
-      const ordersWithOverrides = (data || []).map((o: any) => ({
-        ...o,
-        status: overrideStatuses[o.id] || o.status
-      }));
-      setOrders(ordersWithOverrides);
-      setLoading(false);
-    }
     fetchData();
   }, []);
 
@@ -37,7 +65,10 @@ export default function AdminInvoices() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input type="text" placeholder="Search invoices..." className="border border-border pl-10 pr-4 py-2 font-body text-sm bg-transparent focus:outline-none w-[250px]" />
             </div>
-            <button className="bg-[#1a1a1a] text-white px-6 py-2.5 text-[10px] font-heading font-bold tracking-widest uppercase hover:bg-black transition-colors shrink-0">
+            <button 
+              onClick={() => setIsNewInvoiceOpen(true)}
+              className="bg-[#1a1a1a] text-white px-6 py-2.5 text-[10px] font-heading font-bold tracking-widest uppercase hover:bg-black transition-colors shrink-0"
+            >
               + New Invoice
             </button>
           </div>
@@ -106,8 +137,14 @@ export default function AdminInvoices() {
       </div>
       <InvoiceModal 
         isOpen={!!selectedInvoice} 
-        onClose={() => setSelectedInvoice(null)} 
+        onClose={() => { setSelectedInvoice(null); setAutoAction(null); }} 
         invoiceData={selectedInvoice} 
+        autoAction={autoAction}
+      />
+      <NewInvoiceModal 
+        isOpen={isNewInvoiceOpen}
+        onClose={() => setIsNewInvoiceOpen(false)}
+        onSuccess={handleNewInvoiceSuccess}
       />
     </AdminLayout>
   );

@@ -1,6 +1,6 @@
+import { useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Printer, Download, X } from "lucide-react";
-import { useRef } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
@@ -8,10 +8,24 @@ interface InvoiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   invoiceData: any;
+  autoAction?: 'print' | 'pdf' | null;
 }
 
-export default function InvoiceModal({ isOpen, onClose, invoiceData }: InvoiceModalProps) {
+export default function InvoiceModal({ isOpen, onClose, invoiceData, autoAction }: InvoiceModalProps) {
   const printRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && autoAction && invoiceData) {
+      const timer = setTimeout(() => {
+        if (autoAction === 'print') {
+          window.print();
+        } else if (autoAction === 'pdf') {
+          handleDownloadPDF();
+        }
+      }, 800); // Wait for the modal and its content to render fully
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, autoAction, invoiceData]);
 
   if (!invoiceData) return null;
 
