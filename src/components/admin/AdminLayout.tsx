@@ -46,7 +46,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside className="w-[200px] bg-[#1a1a1a] text-white flex-shrink-0 min-h-screen border-r border-[#2a2a2a] flex flex-col">
         <div className="p-6 border-b border-[#2a2a2a]">
-          <Link to="/" className="font-heading text-sm font-bold tracking-widest block hover:text-gray-300 transition-colors">Design mens and kids</Link>
+          <Link to="/" className="font-heading text-sm font-bold tracking-widest block hover:text-gray-300 transition-colors">Eleve</Link>
           <span className="text-[9px] font-heading tracking-[0.2em] text-muted-foreground uppercase opacity-70">Admin</span>
         </div>
 

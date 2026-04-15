@@ -75,7 +75,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 {isLogin ? "Welcome Back" : "Create Account"}
               </h1>
               <p className="text-muted-foreground font-body text-sm">
-                {isLogin ? "Sign in to your Design mens and kids account" : "Join the Design mens and kids experience"}
+                {isLogin ? "Sign in to your Eleve account" : "Join the Eleve experience"}
               </p>
             </div>
 
@@ -100,7 +100,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   </motion.div>
                 )}
               </AnimatePresence>
-              
+
               <div className="relative">
                 <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -112,7 +112,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   className="w-full pl-12 pr-4 py-3.5 bg-background border border-border/50 rounded-lg font-body text-sm focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-all"
                 />
               </div>
-              
+
               <div className="relative">
                 <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input

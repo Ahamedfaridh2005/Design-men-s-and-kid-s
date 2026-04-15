@@ -9,7 +9,7 @@ const Footer = () => {
       <div className="container mx-auto">
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div>
-            <h3 className="font-heading text-lg font-bold tracking-wider mb-4">Design mens and kids</h3>
+            <h3 className="font-heading text-lg font-bold tracking-wider mb-4">Eleve</h3>
             <p className="text-muted-foreground font-body text-sm leading-relaxed">
               Where timeless craftsmanship meets contemporary elegance.
             </p>
@@ -43,7 +43,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-border pt-8 text-center text-xs text-muted-foreground font-body">
-          © 2026 Design mens and kids. All rights reserved.
+          © 2026 Eleve. All rights reserved.
         </div>
       </div>
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />

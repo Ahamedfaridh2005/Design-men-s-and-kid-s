@@ -45,7 +45,7 @@ const Navbar = () => {
     >
       <div className="w-full px-6 lg:px-12 flex items-center justify-between max-w-[2000px] mx-auto">
         <Link to="/" className="font-heading text-lg lg:text-xl font-bold tracking-wider shrink-0 whitespace-nowrap mr-6">
-          Design Men's & Kid's
+          Eleve
         </Link>
 
         <div className="hidden md:flex items-center gap-6 lg:gap-10 font-body text-sm tracking-wide">
