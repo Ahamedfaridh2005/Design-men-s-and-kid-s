@@ -11,39 +11,39 @@ export default function AdminInvoices() {
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false);
   const [autoAction, setAutoAction] = useState<'print' | 'pdf' | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
-    let dbOrders = [];
+    let customInvoices = [];
     try {
-      const { data } = await supabase.from("orders").select("*");
-      dbOrders = data || [];
+      const { data: iData } = await supabase.from("admin_invoices").select("*");
+      customInvoices = iData || [];
     } catch (e) {
-      console.warn("Could not fetch db orders", e);
+      console.warn("Could not fetch admin invoices", e);
     }
     
-    const localInvoices = JSON.parse(localStorage.getItem('adminInvoices') || '[]');
-    const allOrders = [...localInvoices, ...dbOrders].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    const overrideStatuses = JSON.parse(localStorage.getItem('orderStatusOverrides') || '{}');
-    const ordersWithOverrides = allOrders.map((o: any) => ({
-      ...o,
-      status: overrideStatuses[o.id] || o.status
+    // Map custom invoices to match the structure roughly
+    const mappedCustomInvoices = customInvoices.map((inv: any) => ({
+      ...inv,
+      shipping_address: inv.customer_details, // align keys used in UI
     }));
-    setOrders(ordersWithOverrides);
+
+    const allOrders = mappedCustomInvoices.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    
+    setOrders(allOrders);
     setLoading(false);
   };
 
   const handleNewInvoiceSuccess = (action: 'save' | 'print' | 'pdf', newOrder?: any) => {
-    if (newOrder) {
-      const localInvoices = JSON.parse(localStorage.getItem('adminInvoices') || '[]');
-      localInvoices.unshift(newOrder);
-      localStorage.setItem('adminInvoices', JSON.stringify(localInvoices));
-    }
     fetchData();
     if ((action === 'print' || action === 'pdf') && newOrder) {
       setAutoAction(action);
-      setSelectedInvoice(newOrder);
+      // Map it back to the UI expected format for selectedInvoice
+      setSelectedInvoice({
+        ...newOrder,
+        shipping_address: newOrder.customer_details
+      });
     }
   };
 
@@ -51,11 +51,23 @@ export default function AdminInvoices() {
     fetchData();
   }, []);
 
-  const totalSales = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const filteredOrders = orders.filter(order => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    
+    return (
+      order.order_number?.toLowerCase().includes(query) ||
+      order.shipping_address?.full_name?.toLowerCase().includes(query) ||
+      order.shipping_address?.email?.toLowerCase().includes(query) ||
+      `INV-${order.order_number}`.toLowerCase().includes(query)
+    );
+  });
+
+  const totalSales = filteredOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
 
   return (
     <AdminLayout>
-      <div className="max-w-6xl">
+      <div className="w-full">
         <p className="text-[10px] font-heading font-bold tracking-[0.2em] text-muted-foreground uppercase mb-2">Store</p>
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
@@ -63,7 +75,13 @@ export default function AdminInvoices() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input type="text" placeholder="Search invoices..." className="border border-border pl-10 pr-4 py-2 font-body text-sm bg-transparent focus:outline-none w-[250px]" />
+              <input 
+                type="text" 
+                placeholder="Search invoices..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border border-border pl-10 pr-4 py-2 font-body text-sm bg-transparent focus:outline-none w-[250px]" 
+              />
             </div>
             <button 
               onClick={() => setIsNewInvoiceOpen(true)}
@@ -85,7 +103,7 @@ export default function AdminInvoices() {
           </div>
           <div className="border border-border p-6 bg-transparent">
             <p className="text-[10px] font-heading font-bold tracking-widest text-[#888888] uppercase mb-4">Total Sales</p>
-            <p className="font-heading text-2xl mb-1">${totalSales.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+            <p className="font-heading text-2xl mb-1">₹{totalSales.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
           </div>
         </div>
 
@@ -98,13 +116,13 @@ export default function AdminInvoices() {
                 <th className="px-6 py-4 font-normal">Date</th>
                 <th className="px-6 py-4 font-normal">Status</th>
                 <th className="px-6 py-4 font-normal">Amount</th>
-                <th className="px-6 py-4 font-normal text-right">Action</th>
+                <th className="px-6 py-4 font-normal text-center">Action</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                 <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">Loading...</td></tr>
-              ) : orders.map((order) => {
+               {loading ? (
+                  <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">Loading...</td></tr>
+               ) : filteredOrders.map((order) => {
                 let statusColor = "bg-[#f4e8ff] text-[#7124cc]"; // shipped / confirmed
                 if (order.status?.toUpperCase() === "DELIVERED") statusColor = "bg-[#e0f8eb] text-[#1b8c4c]";
                 if (order.status?.toUpperCase() === "PENDING" || order.status?.toUpperCase() === "PROCESSING") statusColor = "bg-[#fdf4e8] text-[#cc8a24]";
@@ -125,8 +143,8 @@ export default function AdminInvoices() {
                       {order.status || 'PROCESSING'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-heading font-bold text-sm">${Number(order.total).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 font-heading font-bold text-sm">₹{Number(order.total).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                  <td className="px-6 py-4 text-center">
                      <button onClick={() => setSelectedInvoice(order)} className="text-muted-foreground hover:text-foreground transition-colors p-2"><FileText size={14} /></button>
                   </td>
                 </tr>

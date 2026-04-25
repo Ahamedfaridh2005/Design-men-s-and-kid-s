@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 export default function AdminReturns() {
   return (
     <AdminLayout>
-      <div className="max-w-6xl">
+      <div className="w-full">
         <p className="text-[10px] font-heading font-bold tracking-[0.2em] text-muted-foreground uppercase mb-2">Customers</p>
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
@@ -48,7 +48,7 @@ export default function AdminReturns() {
                 </td>
                 <td className="px-6 py-4 text-xs text-muted-foreground">Apr 13, 2026</td>
                 <td className="px-6 py-4 text-sm text-muted-foreground">1</td>
-                <td className="px-6 py-4 font-heading font-bold text-sm text-[#2c2c2c]">$389.00</td>
+                <td className="px-6 py-4 font-heading font-bold text-sm text-[#2c2c2c]">₹389.00</td>
                 <td className="px-6 py-4 text-xs text-[#1b8c4c] font-semibold">29d left</td>
                 <td className="px-6 py-4 text-right">
                    <button className="border border-border px-4 py-2 text-[11px] font-heading text-foreground hover:bg-secondary transition-colors">Process Return</button>

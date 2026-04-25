@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -59,6 +59,66 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_invoices: {
+        Row: {
+          created_at: string | null
+          customer_details: Json | null
+          id: string
+          items: Json | null
+          order_number: string
+          status: string | null
+          total: number
+        }
+        Insert: {
+          created_at?: string | null
+          customer_details?: Json | null
+          id?: string
+          items?: Json | null
+          order_number: string
+          status?: string | null
+          total?: number
+        }
+        Update: {
+          created_at?: string | null
+          customer_details?: Json | null
+          id?: string
+          items?: Json | null
+          order_number?: string
+          status?: string | null
+          total?: number
+        }
+        Relationships: []
+      }
+      issue_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          issue_description: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issue_description: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issue_description?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -95,6 +155,45 @@ export type Database = {
           total?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          gender: string
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          status: string | null
+          stock: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          gender: string
+          id: string
+          image_url?: string | null
+          name: string
+          price: number
+          status?: string | null
+          stock?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          gender?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          status?: string | null
+          stock?: number | null
         }
         Relationships: []
       }

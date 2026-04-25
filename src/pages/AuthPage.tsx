@@ -51,7 +51,7 @@ const AuthPage = () => {
             {isLogin ? "Welcome Back" : "Create Account"}
           </h1>
           <p className="text-muted-foreground font-body text-sm">
-            {isLogin ? "Sign in to your Eleve account" : "Join the Eleve experience"}
+            {isLogin ? "Sign in to your Designz Men's & Kid's account" : "Join the Designz Men's & Kid's experience"}
           </p>
         </div>
 

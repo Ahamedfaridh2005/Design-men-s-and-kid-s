@@ -4,23 +4,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import {
-  Package, User, MapPin, Heart, RotateCcw, CreditCard, MessageSquare, LogOut, AlertCircle
+  Package, User, MapPin, LogOut
 } from "lucide-react";
 import Footer from "@/components/Footer";
-import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import OrderTrackingModal from "@/components/OrderTrackingModal";
+import AddressModal from "@/components/AddressModal";
 
-type Tab = "orders" | "account" | "addresses" | "wishlist" | "returns" | "payment" | "issues";
+type Tab = "orders" | "account" | "addresses";
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "orders", label: "My Orders", icon: Package },
   { id: "account", label: "Account Details", icon: User },
   { id: "addresses", label: "Saved Addresses", icon: MapPin },
-  { id: "wishlist", label: "Wishlist", icon: Heart },
-  { id: "returns", label: "Returns & Refunds", icon: RotateCcw },
-  { id: "payment", label: "Payment Methods", icon: CreditCard },
-  { id: "issues", label: "Issue Reports", icon: MessageSquare },
 ];
 
 const statusColors: Record<string, string> = {
@@ -34,12 +31,72 @@ const statusColors: Record<string, string> = {
 
 const DashboardPage = () => {
   const { user, profile, signOut, refreshProfile } = useAuth();
+  const { products } = useProducts();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [trackingOrder, setTrackingOrder] = useState<any>(null);
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<any>(null);
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [accountForm, setAccountForm] = useState({
+    display_name: "",
+    email: "",
+    phone: ""
+  });
+
+  useEffect(() => {
+    if (profile) {
+      setAccountForm({
+        display_name: profile.display_name || "",
+        email: user?.email || "",
+        phone: profile.phone || ""
+      });
+    }
+  }, [profile, user]);
+
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+    setUpdatingProfile(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          display_name: accountForm.display_name,
+          phone: accountForm.phone,
+        })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      
+      await refreshProfile();
+      toast({ title: "Profile updated successfully" });
+    } catch (error: any) {
+      toast({
+        title: "Error updating profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
+
+  const fetchAddresses = async () => {
+    if (!user) return;
+    setLoadingAddresses(true);
+    const { data } = await supabase
+      .from("addresses")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("is_default", { ascending: false });
+    setAddresses(data || []);
+    setLoadingAddresses(false);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -60,6 +117,7 @@ const DashboardPage = () => {
       setLoadingOrders(false);
     };
     fetchOrders();
+    fetchAddresses();
   }, [user]);
 
   const handleSignOut = async () => {
@@ -123,7 +181,15 @@ const DashboardPage = () => {
                       const product = products.find((p) => p.id === item.productId);
                       return (
                         <div key={idx} className="flex gap-4 items-center py-2">
-                          {product && <img src={product.image} alt={product.name} className="w-14 h-16 object-cover rounded-lg" />}
+                          {product && (
+                            <img 
+                              src={product.image_url && !product.image_url.startsWith('http') && !product.image_url.startsWith('blob:') && !product.image_url.startsWith('/') 
+                                ? `/assets/products/${product.image_url}` 
+                                : product.image_url} 
+                              alt={product.name} 
+                              className="w-14 h-16 object-cover rounded-lg" 
+                            />
+                          )}
                           <div className="flex-1">
                             <p className="font-heading text-sm font-semibold">{item.name || product?.name}</p>
                             <p className="text-xs text-muted-foreground font-body">Qty: {item.quantity}</p>
@@ -150,18 +216,38 @@ const DashboardPage = () => {
             <div className="space-y-6 max-w-2xl">
               <div>
                 <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Full Name</label>
-                <input type="text" defaultValue={profile?.display_name || ""} className="w-full border border-border p-3 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent" />
+                <input 
+                  type="text" 
+                  value={accountForm.display_name} 
+                  onChange={(e) => setAccountForm({ ...accountForm, display_name: e.target.value })}
+                  className="w-full border border-border p-3 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent" 
+                />
               </div>
               <div>
                 <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Email Address</label>
-                <input type="email" defaultValue={user?.email || ""} className="w-full border border-border p-3 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent" />
+                <input 
+                  type="email" 
+                  value={accountForm.email} 
+                  disabled
+                  className="w-full border border-border p-3 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent opacity-60 cursor-not-allowed" 
+                />
+                <p className="text-[10px] text-muted-foreground mt-1 font-body">Email cannot be changed directly here.</p>
               </div>
               <div>
                 <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Phone Number</label>
-                <input type="tel" defaultValue={profile?.phone || ""} className="w-full border border-border p-3 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent" />
+                <input 
+                  type="tel" 
+                  value={accountForm.phone} 
+                  onChange={(e) => setAccountForm({ ...accountForm, phone: e.target.value })}
+                  className="w-full border border-border p-3 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent" 
+                />
               </div>
-              <button className="bg-[#1a1a1a] text-white px-8 py-3.5 text-xs font-heading font-bold tracking-widest hover:bg-black transition-colors mt-6 uppercase">
-                Save Changes
+              <button 
+                onClick={handleUpdateProfile}
+                disabled={updatingProfile}
+                className="bg-[#1a1a1a] text-white px-8 py-3.5 text-xs font-heading font-bold tracking-widest hover:bg-black transition-colors mt-6 uppercase disabled:opacity-50"
+              >
+                {updatingProfile ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
@@ -170,113 +256,51 @@ const DashboardPage = () => {
         return (
           <div>
             <h2 className="font-heading text-2xl mb-8">Saved Addresses</h2>
-            <div className="border border-border p-6 mb-6 bg-card/30 max-w-3xl">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
-                  <span className="bg-[#1a1a1a] text-white text-[10px] font-heading font-bold px-2 py-0.5 tracking-wider uppercase">Default</span>
-                  <span className="font-heading font-semibold text-[15px] uppercase">{profile?.display_name?.toUpperCase() || "USER"}</span>
-                </div>
-                <button className="text-xs text-muted-foreground hover:text-foreground underline decoration-muted-foreground underline-offset-4">Edit</button>
+            {loadingAddresses ? (
+              <div className="space-y-4 max-w-3xl">
+                {[1].map((i) => (
+                  <div key={i} className="h-32 bg-secondary animate-pulse rounded-xl" />
+                ))}
               </div>
-              <p className="text-muted-foreground font-body text-sm">No address saved yet.</p>
-            </div>
-            <button className="border border-border px-6 py-3.5 text-[11px] font-heading font-bold tracking-widest hover:bg-secondary transition-colors uppercase flex items-center gap-2">
+            ) : addresses.length === 0 ? (
+              <div className="border border-border p-6 mb-6 bg-card/30 max-w-3xl">
+                <p className="text-muted-foreground font-body text-sm">No address saved yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4 max-w-3xl mb-8">
+                {addresses.map((address) => (
+                  <div key={address.id} className="border border-border p-6 bg-card/30">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        {address.is_default && (
+                          <span className="bg-[#1a1a1a] text-white text-[10px] font-heading font-bold px-2 py-0.5 tracking-wider uppercase">Default</span>
+                        )}
+                        <span className="bg-secondary text-[10px] font-heading font-bold px-2 py-0.5 tracking-wider uppercase">{address.label || "Address"}</span>
+                        <span className="font-heading font-semibold text-[15px] uppercase">{address.full_name?.toUpperCase()}</span>
+                      </div>
+                      <button 
+                        onClick={() => { setSelectedAddress(address); setIsAddressModalOpen(true); }}
+                        className="text-xs text-muted-foreground hover:text-foreground underline decoration-muted-foreground underline-offset-4"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                    <div className="space-y-1 text-muted-foreground font-body text-sm">
+                      <p>{address.street}</p>
+                      <p>{address.city}, {address.state} {address.zip}</p>
+                      <p>{address.country}</p>
+                      <p className="pt-2 text-foreground font-medium">Phone: {address.phone}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button 
+              onClick={() => { setSelectedAddress(null); setIsAddressModalOpen(true); }}
+              className="border border-border px-6 py-3.5 text-[11px] font-heading font-bold tracking-widest hover:bg-secondary transition-colors uppercase flex items-center gap-2"
+            >
               <span className="text-lg leading-none mt-[-2px]">+</span> ADD NEW ADDRESS
             </button>
-          </div>
-        );
-      case "wishlist":
-        return (
-          <div>
-            <h2 className="font-heading text-2xl font-bold mb-6">Wishlist</h2>
-            <p className="text-muted-foreground font-body">Your wishlist is empty.</p>
-          </div>
-        );
-      case "returns":
-        return (
-          <div>
-            <h2 className="font-heading text-2xl font-bold mb-6">Returns & Refunds</h2>
-            <p className="text-muted-foreground font-body">No return requests.</p>
-          </div>
-        );
-      case "payment":
-        return (
-          <div>
-            <h2 className="font-heading text-2xl mb-8">Payment Methods</h2>
-            <div className="border border-border p-16 mb-6 flex flex-col items-center justify-center text-center bg-card/30 min-h-[300px] max-w-3xl">
-              <CreditCard className="w-10 h-10 text-muted-foreground/30 mb-6 stroke-[1.5]" />
-              <h3 className="font-heading text-xl mb-2 text-muted-foreground/80">No saved payment methods</h3>
-              <p className="font-body text-sm text-muted-foreground">Add a card for faster checkout</p>
-            </div>
-            <button className="border border-border px-6 py-3.5 text-[11px] font-heading font-bold tracking-widest hover:bg-secondary transition-colors uppercase flex items-center gap-2">
-              <span className="text-lg leading-none mt-[-2px]">+</span> ADD PAYMENT METHOD
-            </button>
-          </div>
-        );
-      case "issues":
-        return (
-          <div>
-            <h2 className="font-heading text-2xl mb-8">Report an Issue</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-              {["Wrong Item Received", "Damaged Product", "Missing Item", "Size / Fit Issue", "Quality Concern", "Delivery Problem"].map((category) => (
-                <button key={category} className="border border-border p-5 text-left hover:border-primary transition-colors flex items-start gap-4 bg-card group min-h-[80px]">
-                  <AlertCircle className="w-5 h-5 text-muted-foreground group-hover:text-foreground shrink-0 mt-0.5 stroke-[1.5]" />
-                  <span className="font-body text-sm text-muted-foreground group-hover:text-foreground">{category}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="bg-[#fcfbf9]/50 border border-border p-8 max-w-3xl">
-              <h3 className="font-heading text-xl mb-8">Submit a Ticket</h3>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Order</label>
-                  <div className="relative">
-                    <select className="w-full border border-border p-3.5 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent appearance-none cursor-pointer">
-                      <option value="">Select an order...</option>
-                      {orders.map((order) => (
-                        <option key={order.id} value={order.id}>
-                          Order #{order.order_number} - {new Date(order.created_at).toLocaleDateString()}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Issue Category</label>
-                  <div className="relative">
-                    <select className="w-full border border-border p-3.5 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent appearance-none cursor-pointer">
-                      <option value="">Select category...</option>
-                      {["Wrong Item Received", "Damaged Product", "Missing Item", "Size / Fit Issue", "Quality Concern", "Delivery Problem"].map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground block mb-3 uppercase">Description</label>
-                  <textarea 
-                    rows={5} 
-                    className="w-full border border-border p-3.5 focus:outline-none focus:border-primary transition-colors font-body text-sm bg-transparent resize-none"
-                    placeholder="Describe your issue in detail..."
-                  ></textarea>
-                </div>
-              </div>
-            </div>
           </div>
         );
     }
@@ -294,7 +318,12 @@ const DashboardPage = () => {
                   <span className="font-heading text-xl font-bold">{initials}</span>
                 </div>
                 <h3 className="font-heading text-lg font-bold tracking-wider">{profile?.display_name?.toUpperCase()}</h3>
-                <p className="text-xs text-muted-foreground font-body">{user?.email}</p>
+                <p className="text-xs text-muted-foreground font-body mb-2">{user?.email}</p>
+                <div className="flex justify-center">
+                  <span className={`px-2 py-0.5 text-[9px] font-heading font-bold tracking-widest uppercase rounded ${profile?.role === 'admin' ? 'bg-[#1a1a1a] text-white' : 'bg-secondary text-muted-foreground'}`}>
+                    {profile?.role || 'user'}
+                  </span>
+                </div>
               </div>
 
               <nav className="space-y-1">
@@ -343,6 +372,13 @@ const DashboardPage = () => {
         isOpen={!!trackingOrder} 
         onClose={() => setTrackingOrder(null)} 
         order={trackingOrder} 
+      />
+
+      <AddressModal 
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        onSuccess={fetchAddresses}
+        address={selectedAddress}
       />
     </div>
   );

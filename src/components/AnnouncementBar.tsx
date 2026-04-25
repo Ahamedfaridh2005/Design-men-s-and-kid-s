@@ -4,7 +4,7 @@ import { Sparkles } from "lucide-react";
 export const AnnouncementBar = () => {
   const [isHovered, setIsHovered] = useState(false);
   const announcements = [
-    "Free Shipping Over $150", 
+    "Free Shipping Over ₹1500", 
     "Sustainable Materials", 
     "Crafted in Italy", 
     "New Arrivals Live Now"

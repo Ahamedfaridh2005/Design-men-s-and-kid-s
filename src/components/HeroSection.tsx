@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
 import heroMale from "@/assets/hero-male.jpg";
-import heroFemale from "@/assets/hero-female.jpg";
+import heroKid from "@/assets/hero-kid.png";
 
 const HeroSection = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -18,12 +18,16 @@ const HeroSection = () => {
   return (
     <section ref={ref} className="relative h-screen overflow-hidden">
       <motion.div style={{ scale }} className="absolute inset-0">
-        <div className="absolute inset-0 grid grid-cols-2">
-          <div className="relative overflow-hidden">
-            <img src={heroMale} alt="Men's Collection" loading="eager" fetchpriority="high" decoding="async" className="w-full h-full object-cover" width={960} height={1080} />
-          </div>
-          <div className="relative overflow-hidden">
-            <img src={heroFemale} alt="Women's Collection" loading="eager" fetchpriority="high" decoding="async" className="w-full h-full object-cover" width={960} height={1080} />
+        <div className="absolute inset-0">
+          <div className="relative overflow-hidden w-full h-full flex">
+            <div className="w-1/2 h-full relative">
+              <img src={heroMale} alt="Men's Collection" loading="eager" fetchpriority="high" decoding="async" className="w-full h-full object-cover object-center" />
+              <div className="absolute inset-0 bg-black/20 md:bg-black/10" />
+            </div>
+            <div className="w-1/2 h-full relative">
+              <img src={heroKid} alt="Kids' Collection" loading="eager" fetchpriority="high" decoding="async" className="w-full h-full object-cover object-center" />
+              <div className="absolute inset-0 bg-black/20 md:bg-black/10" />
+            </div>
           </div>
         </div>
         <div className="hero-overlay absolute inset-0" />
@@ -49,7 +53,7 @@ const HeroSection = () => {
         >
           Define Your
           <br />
-          <span className="text-gold-gradient">Elegance</span>
+          <span className="text-[#8c6b4a]">Elegance</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -72,10 +76,10 @@ const HeroSection = () => {
             SHOP MEN
           </Link>
           <Link
-            to="/shop?gender=women"
+            to="/shop?gender=kids"
             className="px-8 py-3.5 border border-foreground text-foreground font-heading text-sm tracking-widest hover:bg-foreground hover:text-background transition-all"
           >
-            SHOP WOMEN
+            SHOP KIDS
           </Link>
         </motion.div>
       </motion.div>

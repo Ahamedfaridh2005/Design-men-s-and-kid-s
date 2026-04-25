@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Printer, Download, X } from "lucide-react";
+import { Printer, Download, X, Save } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
@@ -28,6 +30,38 @@ export default function InvoiceModal({ isOpen, onClose, invoiceData, autoAction 
   }, [isOpen, autoAction, invoiceData]);
 
   if (!invoiceData) return null;
+
+  const handleSaveInvoice = async () => {
+    if (!invoiceData) return;
+    
+    try {
+      // Check if already exists to avoid duplicate order numbers
+      const { data: existing } = await supabase
+        .from("admin_invoices")
+        .select("id")
+        .eq("order_number", invoiceData.order_number)
+        .maybeSingle();
+
+      if (existing) {
+        toast.info("Invoice record already exists");
+        return;
+      }
+
+      const { error } = await supabase.from("admin_invoices").insert({
+        order_number: invoiceData.order_number,
+        customer_details: invoiceData.shipping_address || invoiceData.customer_details || {},
+        items: invoiceData.items || [],
+        total: invoiceData.total || 0,
+        status: invoiceData.status || "processing"
+      });
+
+      if (error) throw error;
+      toast.success("Invoice saved to records successfully");
+    } catch (error: any) {
+      console.error("Error saving invoice", error);
+      toast.error(error.message || "Failed to save invoice record");
+    }
+  };
 
   const handleDownloadPDF = async () => {
     const element = printRef.current;
@@ -82,9 +116,15 @@ export default function InvoiceModal({ isOpen, onClose, invoiceData, autoAction 
             </button>
             <button 
               onClick={handleDownloadPDF} 
-              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] text-white text-xs font-bold tracking-widest uppercase hover:bg-black transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-border text-xs font-bold tracking-widest uppercase hover:bg-gray-50 transition-colors"
             >
               <Download size={14} /> Download PDF
+            </button>
+            <button 
+              onClick={handleSaveInvoice} 
+              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] text-white text-xs font-bold tracking-widest uppercase hover:bg-black transition-colors"
+            >
+              <Save size={14} /> Save to Records
             </button>
             <button onClick={onClose} className="ml-2 text-muted-foreground hover:text-black">
               <X size={20} />
@@ -131,6 +171,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceData, autoAction 
                 <th className="pb-3 text-left font-normal">Item</th>
                 <th className="pb-3 text-center font-normal">Qty</th>
                 <th className="pb-3 text-right font-normal">Price</th>
+                <th className="pb-3 text-right font-normal">Discount</th>
                 <th className="pb-3 text-right font-normal">Total</th>
               </tr>
             </thead>
@@ -139,8 +180,9 @@ export default function InvoiceModal({ isOpen, onClose, invoiceData, autoAction 
                 <tr key={idx} className="border-b border-border/20 last:border-0">
                   <td className="py-4 text-[#2c2c2c]">{item.name || "Apparel Item"}</td>
                   <td className="py-4 text-center text-muted-foreground">{item.quantity || 1}</td>
-                  <td className="py-4 text-right text-muted-foreground">${Number(item.price || 0).toFixed(2)}</td>
-                  <td className="py-4 text-right font-medium text-[#2c2c2c]">${(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}</td>
+                  <td className="py-4 text-right text-muted-foreground">₹{Number(item.price || 0).toFixed(2)}</td>
+                  <td className="py-4 text-right text-muted-foreground">₹{Number(item.discount || 0).toFixed(2)}</td>
+                  <td className="py-4 text-right font-medium text-[#2c2c2c]">₹{((Number(item.price || 0) * Number(item.quantity || 1)) - Number(item.discount || 0)).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -151,7 +193,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceData, autoAction 
               <div className="flex justify-between items-center py-3 border-t border-border">
                 <span className="font-heading font-bold text-lg text-[#2c2c2c]">Total</span>
                 <span className="font-heading font-bold text-xl text-[#2c2c2c]">
-                  ${Number(invoiceData.total).toLocaleString(undefined, {minimumFractionDigits: 2})}
+                  ₹{Number(invoiceData.total).toLocaleString(undefined, {minimumFractionDigits: 2})}
                 </span>
               </div>
             </div>

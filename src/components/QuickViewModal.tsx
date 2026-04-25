@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag } from "lucide-react";
-import { Product } from "@/data/products";
+import { Product } from "@/hooks/useProducts";
 import { useCart } from "@/context/CartContext";
 
 interface Props {
@@ -34,7 +34,13 @@ const QuickViewModal = ({ product, isOpen, onClose }: Props) => {
               <X size={20} />
             </button>
             <div className="aspect-[3/4] md:aspect-auto">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+              <img 
+                src={(product.image_url || (product as any).image) && !(product.image_url || (product as any).image).startsWith('http') && !(product.image_url || (product as any).image).startsWith('blob:') && !(product.image_url || (product as any).image).startsWith('/') 
+                  ? `/assets/products/${product.image_url || (product as any).image}` 
+                  : (product.image_url || (product as any).image)} 
+                alt={product.name} 
+                className="w-full h-full object-cover" 
+              />
             </div>
             <div className="p-8 flex flex-col justify-center">
               <p className="text-xs tracking-[0.2em] text-muted-foreground mb-2 font-body">{product.category.toUpperCase()}</p>

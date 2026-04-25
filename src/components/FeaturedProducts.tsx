@@ -1,9 +1,20 @@
 import { motion } from "framer-motion";
-import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 import ProductCard from "./ProductCard";
 
 const FeaturedProducts = () => {
+  const { products, loading } = useProducts();
   const featured = products.slice(0, 4);
+
+  if (loading && products.length === 0) {
+    return (
+      <section className="py-24 px-6 bg-card">
+        <div className="container mx-auto text-center">
+          <p className="text-muted-foreground animate-pulse">Loading products...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-24 px-6 bg-card">
@@ -20,7 +31,7 @@ const FeaturedProducts = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {featured.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={{ ...product, image: product.image_url }} />
           ))}
         </div>
       </div>
@@ -29,3 +40,4 @@ const FeaturedProducts = () => {
 };
 
 export default FeaturedProducts;
+

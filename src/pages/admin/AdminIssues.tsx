@@ -10,16 +10,40 @@ export default function AdminIssues() {
   const fetchTickets = async () => {
     try {
       setLoading(true);
+      console.log("Fetching tickets...");
+      
+      // Try fetching with profile join first
       const { data, error } = await supabase
         .from('issue_tickets')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id (
+            display_name,
+            phone,
+            email
+          )
+        `)
         .order('created_at', { ascending: false });
         
-      if (!error && data) {
-        setTickets(data);
+      if (error) {
+        console.error('Error fetching tickets:', error);
+        // Fallback to simple select if join fails
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('issue_tickets')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (fallbackError) {
+          console.error('Fallback fetch failed:', fallbackError);
+        } else {
+          setTickets(fallbackData || []);
+        }
+      } else {
+        console.log("Tickets fetched successfully:", data?.length);
+        setTickets(data || []);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Unexpected error:", err);
     } finally {
       setLoading(false);
     }
@@ -47,7 +71,7 @@ export default function AdminIssues() {
 
   return (
     <AdminLayout>
-      <div className="max-w-6xl">
+      <div className="w-full">
         <p className="text-[10px] font-heading font-bold tracking-[0.2em] text-muted-foreground uppercase mb-2">Support</p>
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
@@ -64,50 +88,48 @@ export default function AdminIssues() {
         <div className="bg-white border border-gray-200 overflow-hidden shadow-sm">
           {loading && tickets.length === 0 ? (
             <div className="p-10 text-center text-sm text-gray-500 font-body">Loading tickets...</div>
-          ) : tickets.length === 0 ? (
-            <div className="p-16 text-center">
-              <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock size={24} />
-              </div>
-              <h3 className="font-heading text-lg text-gray-800">Inbox Zero</h3>
-              <p className="text-sm text-gray-500 font-body mt-1">There are no pending support issues right now.</p>
-            </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left font-body min-w-[800px]">
+              <table className="w-full text-sm font-body min-w-[800px] table-fixed">
                 <thead className="text-[10px] font-heading font-bold tracking-widest text-muted-foreground uppercase bg-[#fbfaf8] border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-4 font-normal w-32">Ticket ID</th>
-                    <th className="px-6 py-4 font-normal">Subject</th>
-                    <th className="px-6 py-4 font-normal w-[40%]">Description</th>
-                    <th className="px-6 py-4 font-normal text-center">Status</th>
-                    <th className="px-6 py-4 font-normal text-right">Created</th>
+                    <th className="pl-8 pr-4 py-4 font-normal text-left w-[18%]">Name</th>
+                    <th className="px-4 py-4 font-normal text-left w-[15%]">Phn Num</th>
+                    <th className="px-4 py-4 font-normal text-left w-[22%]">Email</th>
+                    <th className="px-4 py-4 font-normal text-left w-[15%]">Issue Type</th>
+                    <th className="pl-4 pr-8 py-4 font-normal text-right w-[30%]">Description</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {tickets.map((ticket) => (
-                    <tr key={ticket.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4 text-xs font-mono text-gray-500">
-                        {ticket.id.substring(0, 8)}...
-                      </td>
-                      <td className="px-6 py-4 font-bold text-gray-800">
-                        {ticket.subject}
-                      </td>
-                      <td className="px-6 py-4 text-gray-600 truncate max-w-xs">
-                        {ticket.issue_description}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`px-3 py-1 text-[10px] uppercase tracking-wider font-bold rounded-full ${
-                          ticket.status === 'open' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {ticket.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right text-xs text-gray-400">
-                        {new Date(ticket.created_at).toLocaleDateString()}
+                  {tickets.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-8 py-20 text-center text-gray-500 font-body">
+                        No support tickets found.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    tickets.map((ticket) => (
+                      <tr key={ticket.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="pl-8 pr-4 py-4">
+                          <span className="font-heading text-xs tracking-wider uppercase text-gray-800">
+                            {ticket.profiles?.display_name || ticket.name || "Guest"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-xs text-gray-600">
+                          {ticket.profiles?.phone || ticket.phone || "—"}
+                        </td>
+                        <td className="px-4 py-4 text-xs text-gray-600">
+                          {ticket.profiles?.email || ticket.email || "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="font-bold text-gray-800 text-xs">{ticket.subject}</span>
+                        </td>
+                        <td className="pl-4 pr-8 py-4 text-gray-600 leading-relaxed text-right text-xs">
+                          {ticket.issue_description}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

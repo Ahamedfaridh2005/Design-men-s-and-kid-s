@@ -14,15 +14,16 @@ export default function OrderTrackingModal({ isOpen, onClose, order }: OrderTrac
   const isCancelled = status === "CANCELLED";
 
   const steps = [
-    { label: "Ordered", isActive: ["PROCESSING", "PENDING", "CONFIRMED", "SHIPPED", "OUT FOR DELIVERY", "DELIVERED"].includes(status) },
+    { label: "Ordered", isActive: ["ORDERED", "PROCESSING", "SHIPPED", "OUT FOR DELIVERY", "DELIVERED"].includes(status) },
+    { label: "Processing", isActive: ["PROCESSING", "SHIPPED", "OUT FOR DELIVERY", "DELIVERED"].includes(status) },
     { label: "Shipped", isActive: ["SHIPPED", "OUT FOR DELIVERY", "DELIVERED"].includes(status) },
     { label: "Out for delivery", isActive: ["OUT FOR DELIVERY", "DELIVERED"].includes(status) },
     { label: "Delivered", isActive: ["DELIVERED"].includes(status) },
   ];
 
   // Determine current active or final step to show in the header
-  let headlineStatus = status === "PROCESSING" || status === "PENDING" ? "Processing" :
-                       status === "CONFIRMED" ? "Confirmed" :
+  let headlineStatus = status === "ORDERED" ? "Ordered" :
+                       status === "PROCESSING" ? "Processing" :
                        status === "SHIPPED" ? "Shipped" :
                        status === "OUT FOR DELIVERY" ? "Out for delivery" :
                        status === "DELIVERED" ? "Delivered" :
@@ -61,8 +62,9 @@ export default function OrderTrackingModal({ isOpen, onClose, order }: OrderTrac
                 className="absolute left-0 top-1/2 -translate-y-1/2 h-2 bg-[#2ba3b6] -z-10 rounded-full transition-all duration-500 ease-in-out" 
                 style={{ 
                   width: status === "DELIVERED" ? '100%' : 
-                         status === "OUT FOR DELIVERY" ? '66%' : 
-                         status === "SHIPPED" ? '33%' : '0%' 
+                         status === "OUT FOR DELIVERY" ? '75%' : 
+                         status === "SHIPPED" ? '50%' : 
+                         status === "PROCESSING" ? '25%' : '0%' 
                 }} 
               />
 

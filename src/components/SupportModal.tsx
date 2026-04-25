@@ -11,7 +11,7 @@ interface SupportModalProps {
 }
 
 export const SupportModal = ({ isOpen, onClose }: SupportModalProps) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,7 +28,10 @@ export const SupportModal = ({ isOpen, onClose }: SupportModalProps) => {
     try {
       const { error } = await supabase.from("issue_tickets").insert([
         {
-          user_id: user?.id || null, // Allow anonymous tickets if needed 
+          user_id: user?.id || null,
+          name: profile?.display_name || user?.email?.split('@')[0] || "Guest",
+          email: user?.email || null,
+          phone: profile?.phone || null,
           subject: formData.subject,
           issue_description: formData.description,
           status: "open",

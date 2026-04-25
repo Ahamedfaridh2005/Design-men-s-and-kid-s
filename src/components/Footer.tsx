@@ -9,7 +9,7 @@ const Footer = () => {
       <div className="container mx-auto">
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div>
-            <h3 className="font-heading text-lg font-bold tracking-wider mb-4">Eleve</h3>
+            <h3 className="font-heading text-lg font-bold tracking-wider mb-4">Designz Men's & Kid's</h3>
             <p className="text-muted-foreground font-body text-sm leading-relaxed">
               Where timeless craftsmanship meets contemporary elegance.
             </p>
@@ -18,7 +18,7 @@ const Footer = () => {
             <h4 className="font-heading text-sm tracking-widest mb-4">SHOP</h4>
             <div className="space-y-2 text-sm text-muted-foreground font-body flex flex-col items-start">
               <button className="hover:text-foreground transition-colors">Men</button>
-              <button className="hover:text-foreground transition-colors">Women</button>
+              <button className="hover:text-foreground transition-colors">Kids</button>
               <button className="hover:text-foreground transition-colors">New Arrivals</button>
               <button className="hover:text-foreground transition-colors">Sale</button>
             </div>
@@ -28,7 +28,7 @@ const Footer = () => {
             <div className="space-y-2 text-sm text-muted-foreground font-body flex flex-col items-start">
               <button onClick={() => setSupportOpen(true)} className="hover:text-foreground transition-colors">Contact Support / Report Issue</button>
               <button className="hover:text-foreground transition-colors">Shipping</button>
-              <button className="hover:text-foreground transition-colors">Returns</button>
+
               <button className="hover:text-foreground transition-colors">FAQ</button>
             </div>
           </div>
@@ -43,7 +43,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-border pt-8 text-center text-xs text-muted-foreground font-body">
-          © 2026 Eleve. All rights reserved.
+          © 2026 Designz Men's & Kid's. All rights reserved.
         </div>
       </div>
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />

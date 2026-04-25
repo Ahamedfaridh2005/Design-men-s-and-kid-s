@@ -6,6 +6,8 @@ import FeaturedProducts from "@/components/FeaturedProducts";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import ReviewsSection from "@/components/ReviewsSection";
+import FindUs from "@/components/FindUs";
 
 const Index = () => {
   return (
@@ -26,7 +28,7 @@ const Index = () => {
             transition={{ duration: 0.8 }}
             className="text-center max-w-2xl mx-auto"
           >
-            <p className="text-xs tracking-[0.3em] text-accent font-heading mb-4">THE ELEVE DIFFERENCE</p>
+            <p className="text-xs tracking-[0.3em] text-accent font-heading mb-4">THE DESIGNZ DIFFERENCE</p>
             <h2 className="font-heading text-3xl md:text-5xl font-bold mb-6 leading-tight">
               Crafted with intention.
               <br />
@@ -44,6 +46,9 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
+
+      <ReviewsSection />
+      <FindUs />
 
       <Footer />
     </div>

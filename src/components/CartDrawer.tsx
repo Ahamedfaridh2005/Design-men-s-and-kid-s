@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, Trash2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Link } from "react-router-dom";
+import ProductPrice from "./ProductPrice";
 
 const CartDrawer = () => {
   const { items, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart, totalPrice } = useCart();
@@ -54,7 +55,7 @@ const CartDrawer = () => {
                     />
                     <div className="flex-1">
                       <h3 className="font-heading text-sm font-semibold">{item.product.name}</h3>
-                      <p className="text-muted-foreground text-xs font-body mt-1">₹{item.product.price.toLocaleString()}</p>
+                      <ProductPrice price={item.product.price} discount={item.product.discount} size="sm" className="mt-1" />
                       <div className="flex items-center gap-3 mt-3">
                         <button
                           onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
@@ -84,9 +85,9 @@ const CartDrawer = () => {
 
             {items.length > 0 && (
               <div className="p-6 border-t border-border space-y-4">
-                <div className="flex justify-between font-heading">
+                <div className="flex justify-between font-heading items-baseline">
                   <span className="text-sm text-muted-foreground">SUBTOTAL</span>
-                  <span className="text-lg font-bold">₹{totalPrice.toLocaleString()}</span>
+                  <ProductPrice price={totalPrice} size="lg" />
                 </div>
                 <Link
                   to="/checkout"

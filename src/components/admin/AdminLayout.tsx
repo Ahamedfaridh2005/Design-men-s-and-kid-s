@@ -1,12 +1,13 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   BarChart, Package, ShoppingBag, Archive, FileText,
-  Users, CornerUpLeft, MessageSquare, Tag, TrendingUp
+  Users, CornerUpLeft, MessageSquare, Tag, TrendingUp, Menu, X
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const menu = [
     {
@@ -20,7 +21,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       items: [
         { name: "Products", path: "/admin/products", icon: Package },
         { name: "Orders", path: "/admin/orders", icon: ShoppingBag },
-        { name: "Inventory", path: "/admin/inventory", icon: Archive },
         { name: "Invoices", path: "/admin/invoices", icon: FileText }
       ]
     },
@@ -28,26 +28,33 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       title: "CUSTOMERS",
       items: [
         { name: "Customers", path: "/admin/customers", icon: Users },
-        { name: "Returns", path: "/admin/returns", icon: CornerUpLeft },
         { name: "Issue Tickets", path: "/admin/issues", icon: MessageSquare }
       ]
     },
     {
       title: "MARKETING",
       items: [
-        { name: "Discounts", path: "/admin/discounts", icon: Tag },
-        { name: "Reports", path: "/admin/reports", icon: TrendingUp }
+        { name: "Discounts", path: "/admin/discounts", icon: Tag }
       ]
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[#faf9f6] flex">
+    <div className="min-h-screen bg-[#faf9f6] flex relative">
       {/* Sidebar */}
-      <aside className="w-[200px] bg-[#1a1a1a] text-white flex-shrink-0 min-h-screen border-r border-[#2a2a2a] flex flex-col">
-        <div className="p-6 border-b border-[#2a2a2a]">
-          <Link to="/" className="font-heading text-sm font-bold tracking-widest block hover:text-gray-300 transition-colors">Eleve</Link>
-          <span className="text-[9px] font-heading tracking-[0.2em] text-muted-foreground uppercase opacity-70">Admin</span>
+      <aside className={`${isSidebarOpen ? "w-[240px]" : "w-0"} transition-all duration-300 overflow-hidden bg-[#1a1a1a] text-white flex-shrink-0 min-h-screen border-r border-[#2a2a2a] flex flex-col whitespace-nowrap`}>
+        <div className="p-6 pr-4 border-b border-[#2a2a2a] flex items-start justify-between">
+          <div className="overflow-hidden">
+            <Link to="/" className="font-heading text-sm font-bold tracking-widest block hover:text-gray-300 transition-colors truncate">Designz Men's & Kid's</Link>
+            <span className="text-[9px] font-heading tracking-[0.2em] text-muted-foreground uppercase opacity-70">Admin</span>
+          </div>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-1 rounded-md hover:bg-white/10 transition-colors flex-shrink-0 ml-2"
+            title="Hide sidebar"
+          >
+            <X size={16} className="text-gray-400 hover:text-white" />
+          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-6">
@@ -86,8 +93,21 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-10 overflow-y-auto h-screen">
-        {children}
+      <main className="flex-1 overflow-y-auto h-screen relative flex flex-col">
+        {!isSidebarOpen && (
+          <div className="flex-none p-6 pb-0 flex items-center">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 rounded-md hover:bg-gray-100 transition-colors bg-white border border-border shadow-sm"
+              title="Show sidebar"
+            >
+              <Menu size={20} className="text-foreground" />
+            </button>
+          </div>
+        )}
+        <div className={`flex-1 ${!isSidebarOpen ? 'px-10 pb-10 pt-6' : 'p-10'}`}>
+          {children}
+        </div>
       </main>
     </div>
   );

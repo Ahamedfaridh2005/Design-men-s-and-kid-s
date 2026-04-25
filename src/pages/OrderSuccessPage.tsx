@@ -19,9 +19,10 @@ const OrderSuccessPage = () => {
         >
           <CheckCircle size={40} className="text-accent" />
         </motion.div>
-        <h1 className="font-heading text-3xl font-bold mb-3">Order Confirmed</h1>
+        <h1 className="font-heading text-3xl font-bold mb-3">Thank you for your order!</h1>
         <p className="text-muted-foreground font-body mb-8">
-          Thank you for your purchase. Your order is being processed and you'll receive a confirmation soon.
+          We have received your payment details and uploaded screenshot. 
+          Our team will verify the payment and confirm your order shortly.
         </p>
         <Link
           to="/"
